@@ -1,0 +1,209 @@
+
+{% extends 'Layout.html' %}
+ {% block project %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <style>
+        /* עיצוב הגלריה */
+        .property-images img {
+            height: 50px; /* גודל קטן של התמונות */
+            width: auto;  /* שמירה על יחס גובה ורוחב */
+            cursor: pointer; /* הופך את התמונה ללחיצה */
+            margin-right: 5px;
+            margin-bottom: 5px;
+        }
+
+        .property-images {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            justify-content: flex-start;
+            z-index: 10; /* הנחת הקרוסלה מעל שאר התוכן */
+            position: relative;
+        }
+
+        /* קרוסלה */
+        .property-carousel {
+            display: none; /* התחל את הקרוסלה במצב מוסתר */
+            position: absolute;
+            top: 10px; /* מיקום ממעלה הדף */
+            left: 0;
+            right: 0;
+            z-index: 20; /* הצגת הקרוסלה מעל הדירה */
+            width: 100%;
+        }
+
+        .slick-slide img {
+            width: 100%; /* התאם את התמונה לגודל המתאים */
+        }
+
+        /* עיצוב עבור החצים */
+        .slick-prev, .slick-next {
+            background-color: rgba(0, 0, 0, 0.7); /* צבע רקע חצי שקוף לחצים */
+            color: white;
+            border-radius: 50%;
+            padding: 15px;
+            font-size: 30px; /* הגדלת החצים */
+            z-index: 30; /* הצגת החצים מעל התמונה */
+            position: absolute;
+            top: 50%; /* ממקם את החצים במרכז האנכי */
+            transform: translateY(-50%); /* שיפור המיקום */
+        }
+
+        .slick-prev {
+            left: 10px;
+        }
+
+        .slick-next {
+            right: 10px;
+        }
+
+        /* עבור lightbox */
+        #lightbox {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            z-index: 30;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+        #lightbox img {
+            max-width: 80%;
+            max-height: 80%;
+        }
+        #lightbox span {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            color: white;
+            font-size: 30px;
+            cursor: pointer;
+        }
+        .image{
+        width:100px
+        }
+    </style>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/1.css' %}">
+
+    <!-- הוספת הספריות של Slick Carousel -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick-theme.css">
+
+    <script src="https://cdn.jsdelivr.net/npm/bs5-toast@1.0.0/bs5-toast.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick.min.js"></script> <!-- Slick Carousel -->
+    <script src="{% static 'js/script.js' %}" defer></script>
+</head>
+<body>
+    <section class="hero">
+        <h1>מצא את הבית שלך בקלות</h1>
+        <p>חיפוש דירות למכירה ולקנייה בכל מקום ובכל מחיר</p>
+        <form class="search-form" method="post">
+            {% csrf_token %}
+            <div>
+                <span>עיר</span>
+                <input type="text" name="city">
+                <span>קומה</span>
+                <input type="number" name="floor">
+                <span>מחיר</span>
+                <input type="number" name="price">
+                <button type="submit">חפש</button>
+            </div>
+        </form>
+    </section>
+
+    <section class="properties">
+        <h2>דירות למכירה</h2>
+        <div class="property-list">
+            {% for item in departments_with_images %}
+                <div class="property-card">
+                    <div class="property-images">
+                        <!-- תמונות מוצגות לפני הקרוסלה -->
+                        {% for image in item.images %}
+                        <div>
+                            <img class="image" src="{{ image.image.url }}" alt="Image for {{ item.department.title }}" onclick="openLightbox('{{ image.image.url }}')">
+                        </div>
+                            {% empty %}
+                            <p>No images available.</p>
+                        {% endfor %}
+                    </div>
+
+                    <!-- קרוסלה המוסתרת ומופיעה אחרי הפעלת Slick -->
+                    <div class="property-carousel">
+                        <div class="slick-carousel">
+                            {% for image in item.images %}
+                                <div>
+                                    <img src="{{ image.image.url }}" alt="Image for {{ item.department.title }}">
+                                </div>
+                            {% empty %}
+                                <p>No images available.</p>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <h3> דירה ב{{ item.department.city }} {{ item.department.neighborhood }} {{ item.department.street }}</h3>
+                    {% if item.department.isMediation %}
+
+                    <p> קומה {{ item.department.floor }} , {{ item.department.numRooms }} חדרים </p>
+                    <p>מחיר: {{ item.department.price }} ש"ח,הדירה נמכרת עם תיווך</p>
+                    {%else%}
+                    <p> קומה {{ item.department.floor }} , {{ item.department.numRooms }} חדרים </p>
+                    <p>מחיר: {{ item.department.price }} ש"ח,הדירה נמכרת ללא תיווך</p>                    {% endif %}
+                    <a href="{% url 'apply' item.department.department_id %}">Apply</a>
+                </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <!-- Lightbox: תיבת תמונה מוגדלת -->
+    <div id="lightbox" style="display:none;">
+        <span onclick="closeLightbox()" style="cursor:pointer;">X</span>
+        <img id="lightbox-image" class="lightbox-image">
+    </div>
+
+    <script>
+        // JavaScript עבור Lightbox
+        function openLightbox(imageUrl) {
+            document.getElementById("lightbox").style.display = "flex";
+            document.getElementById("lightbox-image").src = imageUrl;
+        }
+
+        function closeLightbox() {
+            document.getElementById("lightbox").style.display = "none";
+        }
+
+        // הפעלת Slick Carousel לכל דירה בנפרד
+        $(document).ready(function(){
+            // הפעלת Slick Carousel על אלמנט ה-carousel של כל דירה
+            $('.slick-carousel').slick({
+                slidesToShow: 1,  // כל פעם תמונה אחת
+                slidesToScroll: 1,  // כל פעם תמונה אחת
+                arrows: true, // הוסף חצים לדפדוף
+                autoplay: true,  // הפעל אוטומטית את הקרוסלה
+                autoplaySpeed: 200, // זמן בין שינוי תמונה לתמונה (במילישניות)
+                responsive: [
+                    {
+                        breakpoint: 768, // עיצוב לרוחב מסך קטן
+                        settings: {
+                            slidesToShow: 1,
+                            slidesToScroll: 1,
+                        }
+                    }
+                ]
+            });
+
+            // הצגת הקרוסלה לאחר שה-DOM נטען
+            $('.property-carousel').show();  // הצג את הקרוסלה אחרי שהדף נטען
+        });
+    </script>
+</body>
+</html>
+{% endblock %}

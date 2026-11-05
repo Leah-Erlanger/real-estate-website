@@ -1,0 +1,168 @@
+{% extends 'Layout.html' %}
+ {% block project %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>שליחת הודעה בין קונה למוכר</title>
+
+    <!-- הוספת סגנונות CSS -->
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            position: relative;
+        }
+
+        .container {
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 600px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 16px;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 150px;
+        }
+
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 4px;
+            width: 100%;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        /* סגנונות עבור הטוסטר */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%); /* ממקם את הטוסטר במרכז המסך */
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            display: none;
+            opacity: 0;
+            transition: opacity 0.5s ease, transform 0.5s ease;
+            z-index: 9999;
+        }
+
+        .toast.show {
+            display: block;
+            opacity: 1;
+            transform: translateY(-60px); /* הטוסטר יתעופף למעלה */
+        }
+
+        .toast.error {
+            background-color: #f44336;
+        }
+
+        /* אנימציה של הטוסטר - כשהוא מוסר */
+        .toast.hide {
+            opacity: 0;
+            transform: translateY(-100%); /* הטוסטר זז למעלה לגמרי */
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>שלח הודעה למוכר</h1>
+
+        <!-- טופס שליחת הודעה -->
+        <form method="post">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="message">הודעה</label>
+                {{ form.message }}
+            </div>
+            <button type="submit">שלח הודעה</button>
+        </form>
+    </div>
+
+    <!-- כאן תוצג הודעת הצלחה או שגיאה -->
+    <div id="toast" class="toast">
+        <!-- הטוסטר יוצג כאן -->
+    </div>
+
+    <script>
+        // פונקציה להציג את ההודעה (toast)
+        function showToast(message, isError) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');  // הצגת הטוסטר
+
+            if (isError) {
+                toast.classList.add('error');
+            }
+
+            // אחרי 3 שניות, נגרום לו להיעלם על ידי הוספת הקלאס "hide"
+            setTimeout(() => {
+                toast.classList.add('hide');  // להעלים את הטוסטר על ידי הזזתו למעלה
+            }, 3000); // זה קורה אחרי 3 שניות
+
+            // לאחר סיום האנימציה, נסיר את הקלאס "show" ו-"hide"
+            setTimeout(() => {
+                toast.classList.remove('show', 'hide');
+                window.location.href = "/buyer";
+            }, 3500); // זה קורה לאחר 3.5 שניות (כדי להמתין עד סיום האנימציה)
+        }
+
+        // בדיקת הודעות על מנת להציג אותן
+        {% if messages %}
+            {% for message in messages %}
+                showToast("{{ message }}", "{{ message.tags }}" == "error");
+            {% endfor %}
+        {% endif %}
+
+
+    </script>
+
+</body>
+</html>
+{% endblock %}

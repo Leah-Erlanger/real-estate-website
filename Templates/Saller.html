@@ -1,0 +1,267 @@
+{% extends 'Layout.html' %}
+{% block project %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <style>
+        .property-images img {
+            max-width: 100px;
+            height: auto;
+            cursor: pointer;
+            margin-right: 5px;
+            margin-bottom: 5px;
+        }
+
+        .property-images {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            justify-content: flex-start;
+            z-index: 10;
+            position: relative;
+        }
+
+        .property-carousel {
+            display: none;
+            position: absolute;
+            left: 0;
+            right: 0;
+            z-index: 20;
+            width: 100%;
+        }
+
+        .slick-slide img {
+            width: 100%;
+        }
+
+        #lightbox {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            z-index: 30;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+
+        #lightbox img {
+            max-width: 80%;
+            max-height: 80%;
+        }
+
+        #lightbox span {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            color: white;
+            font-size: 30px;
+            cursor: pointer;
+        }
+
+        /* עיצוב לחיצים */
+        .slick-prev, .slick-next {
+            background-color: rgba(0, 0, 0, 0.5);  /* צבע רקע חצי שקוף לחצים */
+            color: white;
+            border-radius: 50%;
+            padding: 15px;
+            font-size: 30px;  /* גדלים את החיצים */
+            z-index: 30;  /* הצגת החיצים מעל התמונות */
+            position: absolute;
+            top: 50%;  /* ממקם את החצים במרכז האנכי */
+            transform: translateY(-50%);
+        }
+
+        .slick-prev {
+            left: 10px;
+        }
+
+        .slick-next {
+            right: 10px;
+        }
+
+        /* עיצוב נקודות */
+        .slick-dots {
+            position: absolute;
+            bottom: 10px;
+            z-index: 30;
+        }
+
+        .slick-dots li button:before {
+            color: white;  /* צבע נקודות */
+        }
+    </style>
+
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/1.css' %}">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick-theme.css">
+    <script src="https://cdn.jsdelivr.net/npm/bs5-toast@1.0.0/bs5-toast.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick.min.js"></script>
+    <script src="{% static 'js/script.js' %}" defer></script>
+</head>
+<body>
+    <section class="hero">
+        <h1>מצא את הבית שלך בקלות</h1>
+        <p>חיפוש דירות למכירה ולקנייה בכל מקום ובכל מחיר</p>
+    </section>
+
+    <a href="/addDepartment">הוסף דירה חדשה</a>
+
+    <section class="properties">
+        <h2>דירות למכירה</h2>
+        <div class="property-list">
+            {% for item in departments_with_images_and_applys %}
+                <div class="property-card">
+                    <div class="property-images">
+                        <!-- תמונות מוצגות לפני הקרוסלה -->
+                        {% for image in item.images %}
+                            {% if image %}
+                               <img class="image" src="{{ image.image.url }}" alt="Image for {{ item.department.title }}" onclick="openLightbox('{{ image.image.url }}', {{ item.department.id }})">
+                            {% else %}
+                               <p>No image available</p>
+                            {% endif %}
+                        {% empty %}
+                            <p>No images available.</p>
+                        {% endfor %}
+                    </div>
+
+                    <div>
+                        {% for apply in item.applys %}
+                            <div>{{ apply.message }}, {{ apply.user.username }}, {{ apply.user.phone }}</div>
+                        {% empty %}
+                            <p>No applys available.</p>
+                        {% endfor %}
+                    </div>
+
+                    <div class="property-carousel">
+                        <div class="slick-carousel">
+                            {% for image in item.images %}
+                                <div>
+                                    {% if image %}
+                                       <img class="image" src="{{ image.image.url }}" alt="Image for {{ item.department.title }}">
+                                    {% else %}
+                                       <p>No image available</p>
+                                    {% endif %}
+                                </div>
+                            {% empty %}
+                                <p>No images available.</p>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <h3> דירה ב{{ item.department.city }} {{ item.department.neighborhood }} {{ item.department.street }}</h3>
+                    <p> קומה {{ item.department.floor }} , {{ item.department.numRooms }} חדרים, מחיר: {{ item.department.price }} ש"ח</p>
+
+                    {% if item.mediation_fee %}
+                        <div>דמי תיווך:{{ item.mediation_fee }}</div>
+                    {% else %}
+                        <div data-id="{{ item.department.department_id }}"></div>
+                    {% endif %}
+
+                    <button class="update-status-btn" data-id="{{ item.department.department_id }}" onclick="updateStatus({{ item.department.department_id }})">
+                        {{ item.department.status|yesno:"נמכר,זמין" }}
+                    </button>
+                </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <!-- Lightbox: תיבת תמונה מוגדלת -->
+    <div id="lightbox" style="display:none;">
+        <span onclick="closeLightbox()" style="cursor:pointer;">X</span>
+        <div class="slick-carousel-lightbox"></div>
+    </div>
+
+    <script>
+        function updateStatus(departmentId) {
+            $.ajax({
+                url: '/update_status',
+                type: 'POST',
+                data: {
+                    'department_id': departmentId,
+                    'csrfmiddlewaretoken': '{{ csrf_token }}'
+                },
+                success: function(response) {
+                    var statusButton = $("button[data-id='" + departmentId + "']");
+                    var statusDiv = $("div[data-id='" + departmentId + "']");
+
+                    if (response.status === 'sold') {
+                        statusButton.text("נמכר");
+                        if (response.mediation_fee) {
+                            statusDiv.text("דמי תיווך: " + response.mediation_fee.toFixed(2) + " ש\"ח");
+                        } else {
+                            statusDiv.text("");
+                        }
+                    } else {
+                        statusButton.text("זמין");
+                        statusDiv.text("");
+                    }
+                },
+                error: function() {
+                    alert("שגיאה בעדכון הסטטוס");
+                }
+            });
+        }
+
+        // JavaScript עבור Lightbox
+        function openLightbox(imageUrl, departmentId) {
+            var images = [];
+            {% for item in departments_with_images_and_applys %}
+                {% if item.department.id == departmentId %}
+                    {% for image in item.images %}
+                        {% if image %}
+                            images.push("{{ image.image.url }}");
+                        {% endif %}
+                    {% endfor %}
+                {% endif %}
+            {% endfor %}
+
+            var carouselHTML = '';
+            for (var i = 0; i < images.length; i++) {
+                carouselHTML += '<div><img src="' + images[i] + '" alt="Image ' + (i + 1) + '"></div>';
+            }
+            document.querySelector(".slick-carousel-lightbox").innerHTML = carouselHTML;
+
+            // הצגת ה-Lightbox
+            document.getElementById("lightbox").style.display = "flex";
+
+            // הפעלת Slick Carousel בתוך ה-Lightbox עם חיצים
+            $('.slick-carousel-lightbox').slick({
+                slidesToShow: 1,
+                slidesToScroll: 1,
+                arrows: true,  // הצגת חיצים
+                autoplay: false,
+                dots: true,
+                adaptiveHeight: true,
+            });
+        }
+
+        function closeLightbox() {
+            document.getElementById("lightbox").style.display = "none";
+            // סגור את הקרוסלה כשסוגרים את ה-Lightbox
+            $('.slick-carousel-lightbox').slick('unslick');
+        }
+
+        // חיבור לאירוע פתיחת ה-Lightbox בתמונות הקטנות
+        function initImageClicks() {
+            $(".property-images img").on("click", function() {
+                var imageUrl = $(this).attr("src");
+                var departmentId = $(this).data("department-id");
+                openLightbox(imageUrl, departmentId);
+            });
+        }
+
+        $(document).ready(function() {
+            initImageClicks();  // אתחול אירועים על התמונות הקטנות
+        });
+    </script>
+</body>
+</html>
+{% endblock %}

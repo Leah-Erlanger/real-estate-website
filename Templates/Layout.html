@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="he">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מכירת דירות</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/1.css' %}">
+    <script src="https://cdn.jsdelivr.net/npm/bs5-toast@1.0.0/bs5-toast.min.js"></script>
+    <script src="{% static 'js/script.js' %}" defer></script>
+</head>
+<body>
+    <header>
+        <nav>
+            <ul>
+                <li><a href="/">דף הבית</a></li>
+                <li><a href="/login">התחברות</a></li>
+                <li><a href="/register">הרשמה</a></li>
+            </ul>
+        </nav>
+    </header>
+
+
+
+{% block project%}{%endblock%}
+
+    <footer>
+        <p>&copy; 2025 דירות למכירה - כל הזכויות שמורות</p>
+    </footer>
+</body>
+</html>
